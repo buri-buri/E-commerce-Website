@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from django.conf import settings
 from django.http import JsonResponse
+#from django.views.decorators.csrf import csrf_exempt
 from store import models
 import datetime
 import json
@@ -13,10 +14,10 @@ def store(request):
         cartItems=order.get_cart_items
     else:
         items=[]
-        order={'get_cart_total':0,'get_cart_items':0}
+        order={'get_cart_total':0,'get_cart_items':0,'shipping':False}
         cartItems=order['get_cart_items']
     products=models.Product.objects.all()
-    d={'products':products,'cartItems':cartItems,'shipping':False}
+    d={'products':products,'cartItems':cartItems}
     return render(request,'store.html',d)
 
 def cart(request):
@@ -26,9 +27,12 @@ def cart(request):
         items=order.orderitem_set.all()
         cartItems=order.get_cart_items
     else:
+        cart=json.loads(request.COOKIES['cart'])
+        print('Cart:',cart)
         items=[]
-        cartItems=order['get_Cart_items']
-    d={'items':items,'order':order,'cartItems':cartItems,'shipping':False}
+        order={'get_cart_total':0,'get_cart_items':0,'shipping':False}
+        cartItems=order['get_cart_items']
+    d={'items':items,'order':order,'cartItems':cartItems}
     return render(request,'cart.html',d)
 
 def checkout(request):
@@ -39,9 +43,9 @@ def checkout(request):
         cartItems=order.get_cart_items
     else:
         items=[]
-        order={'get_cart_total':0,'get_cart_items':0}
+        order={'get_cart_total':0,'get_cart_items':0,'shipping':False}
         cartItems=order['get_cart_items']
-    d={'items':items,'order':order,'cartItems':cartItems,'shipping':False}
+    d={'items':items,'order':order,'cartItems':cartItems}
     return render(request,'checkout.html',d)
 
 def updateItem(request):
@@ -63,6 +67,7 @@ def updateItem(request):
         orderItem.delete()
     return JsonResponse('Item was added',safe=False)
 
+#@csrf_exempt
 def processOrder(request):
     transaction_id=datetime.datetime.now().timestamp()
     data=json.loads(request.body)
